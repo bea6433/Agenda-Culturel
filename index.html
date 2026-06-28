@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda Culturel — Pays Basque</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f4f0; color: #1a1a1a; padding: 2rem 1rem; }
+  .container { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 600; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
+  .section { background: white; border-radius: 12px; border: 1px solid #e5e5e5; padding: 1.25rem; margin-bottom: 1rem; }
+  label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
+  input, select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: white; }
+  input:focus, select:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .date-row { display: flex; gap: 8px; align-items: center; }
+  .date-row input { flex: 1; }
+  .cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+  .cat-btn { font-size: 13px; padding: 6px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; color: #555; cursor: pointer; transition: all 0.15s; }
+  .cat-btn.active { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+  .search-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 500; cursor: pointer; border-radius: 10px; border: none; background: #1d4ed8; color: white; margin-top: 1rem; }
+  .search-btn:hover { background: #1e40af; }
+  .event-card { background: white; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; }
+  .event-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .event-title { font-size: 16px; font-weight: 600; }
+  .event-cat { font-size: 12px; padding: 3px 12px; border-radius: 20px; background: #eff6ff; color: #1d4ed8; white-space: nowrap; }
+  .event-meta { font-size: 13px; color: #666; display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ticket-btn { font-size: 13px; padding: 7px 18px; border-radius: 8px; border: 1px solid #93c5fd; background: #eff6ff; color: #1d4ed8; cursor: pointer; text-decoration: none; display: inline-block; }
+  .ticket-btn:hover { background: #dbeafe; }
+  .msg { text-align: center; padding: 2rem; color: #888; font-size: 14px; }
+  .error { background: #fef2f2; color: #b91c1c; border-radius: 8px; padding: 1rem; font-size: 14px; margin-top: 1rem; }
+  .key-saved { font-size: 12px; color: #15803d; margin-top: 6px; }
+  .api-row { display: flex; gap: 8px; }
+  .api-row input { flex: 1; }
+  .save-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 13px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎭 Agenda culturel — Pays Basque</h1>
+  <p class="subtitle">Bayonne · Anglet · Bidart · Guéthary · Saint-Jean-de-Luz · Saint-Sébastien</p>
+
+  <div class="section">
+    <label>🔑 Clé API Anthropic</label>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-..." />
+      <button class="save-btn" onclick="saveKey()">Enregistrer</button>
+    </div>
+    <div class="key-saved" id="keySaved" style="display:none;">✓ Clé enregistrée</div>
+  </div>
+
+  <div class="section">
+    <div class="cats">
+      <button class="cat-btn active" data-cat="tous" onclick="toggleCat(this)">Tous</button>
+      <button class="cat-btn" data-cat="cinéma" onclick="toggleCat(this)">🎬 Cinéma</button>
+      <button class="cat-btn" data-cat="théâtre" onclick="toggleCat(this)">🎭 Théâtre</button>
+      <button class="cat-btn" data-cat="danse" onclick="toggleCat(this)">💃 Danse</button>
+      <button class="cat-btn" data-cat="festival" onclick="toggleCat(this)">🎉 Festival</button>
+      <button class="cat-btn" data-cat="musique" onclick="toggleCat(this)">🎵 Musique</button>
+      <button class="cat-btn" data-cat="autre" onclick="toggleCat(this)">⭐ Autre</button>
+    </div>
+
+    <div class="row" style="margin-bottom:12px;">
+      <div>
+        <label>📍 Ville</label>
+        <select id="ville">
+          <option value="toutes">Toutes les villes</option>
+          <option value="Bayonne">Bayonne</option>
+          <option value="Anglet">Anglet</option>
+          <option value="Bidart">Bidart</option>
+          <option value="Guéthary">Guéthary</option>
+          <option value="Saint-Jean-de-Luz">Saint-Jean-de-Luz</option>
+          <option value="Saint-Sébastien">Saint-Sébastien</option>
+        </select>
+      </div>
+      <div>
+        <label>📅 Période</label>
+        <div class="date-row">
+          <input type="date" id="dateFrom" />
+          <span style="color:#aaa;">→</span>
+          <input type="date" id="dateTo" />
+        </div>
+      </div>
+    </div>
+
+    <button class="search-btn" onclick="searchEvents()">🔍 Rechercher des événements</button>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<script>
+let selectedCat = 'tous';
+let savedKey = '';
+
+function saveKey() {
+  savedKey = document.getElementById('apiKey').value.trim();
+  if (savedKey) {
+    document.getElementById('keySaved').style.display = 'block';
+    setTimeout(() => document.getElementById('keySaved').style.display = 'none', 2500);
+  }
+}
+
+function toggleCat(btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedCat = btn.dataset.cat;
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+async function searchEvents() {
+  const key = savedKey || document.getElementById('apiKey').value.trim();
+  if (!key) {
+    document.getElementById('results').innerHTML = '<div class="error">Entre ta clé API Anthropic et clique Enregistrer.</div>';
+    return;
+  }
+
+  const ville = document.getElementById('ville').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  const cat = selectedCat;
+
+  const villeText = ville === 'toutes' ? 'Bayonne, Anglet, Bidart, Guéthary, Saint-Jean-de-Luz et Saint-Sébastien' : ville;
+  const catText = cat === 'tous' ? 'cinéma, théâtre, danse, festival, musique et autres événements culturels' : cat;
+  const dateText = dateFrom && dateTo
+    ? `entre le ${formatDate(dateFrom)} et le ${formatDate(dateTo)}`
+    : dateFrom ? `à partir du ${formatDate(dateFrom)}`
+    : dateTo ? `jusqu'au ${formatDate(dateTo)}`
+    : 'dans les prochaines semaines';
+
+  document.getElementById('results').innerHTML = '<div class="msg">⏳ Recherche en cours...</div>';
+
+  const prompt = `Tu es un assistant spécialisé dans les événements culturels du Pays Basque.
+Recherche des événements de type "${catText}" à ${villeText} ${dateText}.
+Réponds UNIQUEMENT avec un JSON valide, sans aucun texte avant ou après, sans balises markdown.
+Format exact :
+{"events":[{"titre":"...","categorie":"...","date":"...","lieu":"...","ville":"...","description":"...","billetterie":"..."}]}
+Entre 3 et 6 événements réels ou vraisemblables. Pour billetterie : URL réelle si connue, sinon "https://www.fnacspectacles.com".`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `Erreur HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const textBlock = data.content.find(b => b.type === 'text');
+    if (!textBlock) throw new Error('Pas de réponse texte.');
+
+    const raw = textBlock.text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    renderEvents(parsed.events || []);
+  } catch (err) {
+    document.getElementById('results').innerHTML = `<div class="error">❌ Erreur : ${err.message}</div>`;
+  }
+}
+
+function renderEvents(events) {
+  if (!events.length) {
+    document.getElementById('results').innerHTML = '<div class="msg">Aucun événement trouvé.</div>';
+    return;
+  }
+  document.getElementById('results').innerHTML = events.map(e => `
+    <div class="event-card">
+      <div class="event-top">
+        <div class="event-title">${e.titre}</div>
+        <span class="event-cat">${e.categorie}</span>
+      </div>
+      <div class="event-meta">
+        <span>📅 ${e.date}</span>
+        <span>📍 ${e.lieu}, ${e.ville}</span>
+      </div>
+      <p style="font-size:14px;color:#555;margin-bottom:12px;line-height:1.6;">${e.description}</p>
+      <a href="${e.billetterie}" class="ticket-btn" target="_blank">🎟️ Réserver</a>
+    </div>
+  `).join('');
+}
+
+document.getElementById('dateFrom').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
